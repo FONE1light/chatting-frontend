@@ -25,12 +25,12 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
     const [currMsg, setCurrMsg] = useState("");
 
     useEffect(() => {
-        setWs(new WebSocket(`ws://localhost:8080/chat?id=${id}&name=${displayName}`))
+        setWs(new WebSocket(`ws://localhost:8000/chat?id=${id}&name=${displayName}`))
     }, [])
 
     useEffect(() => {
         let timer = setInterval(() => {
-            setWs(new WebSocket(`ws://localhost:8080/chat?id=${id}&name=${displayName}`))
+            setWs(new WebSocket(`ws://localhost:8000/chat?id=${id}&name=${displayName}`))
         }, 1000);
 
         return () => clearInterval(timer)
