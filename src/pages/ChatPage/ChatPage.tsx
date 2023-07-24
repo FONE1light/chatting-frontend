@@ -6,7 +6,7 @@ import "./index.scss";
 type Message = {
     author: string,
     message: string,
-    count: string,
+    isRead: boolean,
 }
 
 type PathVariables = {
@@ -22,6 +22,7 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
     const [ws, setWs] = useState<WebSocket>();
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [newMsg, setNewMsg] = useState<Message | undefined>(undefined);
+    const [newRead, setNewRead] = useState<Message | undefined>(undefined);
     const [currMsg, setCurrMsg] = useState("");
 
     useEffect(() => {
@@ -29,32 +30,32 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
     }, [])
 
     useEffect(() => {
-        let timer = setInterval(() => {
-            setWs(new WebSocket(`ws://localhost:8000/chat?id=${id}&name=${displayName}`))
-        }, 1000);
-
-        return () => clearInterval(timer)
-    }, []);
-
-    useEffect(() => {
         if (ws) {
             ws.onmessage = (evt) => {
-                setNewMsg(JSON.parse(evt.data))
+                const data = JSON.parse(evt.data);
+                setNewMsg(data as Message);
+                setNewRead(data as Message);
             };
         }
     }, [ws])
 
     useEffect(() => {
         if (newMsg) {
-            if (newMsg.count === "") {
-                setMessages([])
-            } else {
-                setMessages(
-                    messages.concat(newMsg)
-                )
-            }
+            setMessages(
+                messages.concat(newMsg)
+            )
         }
     }, [newMsg])
+
+    useEffect(() => {
+        if(newRead) {
+            const updatedMessages = messages.map(message => {
+                return { ...message, isRead: true };
+            });
+
+            setMessages(updatedMessages)
+        }
+    }, [newRead])
 
     const handleChangeCurrMsg = (msg: string) => {
         setCurrMsg(msg)
@@ -90,7 +91,9 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
                                         {message.author}
                                     </div>
                                     <div className={"chat-message"}>{message.message}</div>
-                                    <div className={"chat-read"}>{message.count}</div>
+                                    <div className={"chat-read"}>
+                                        {message.isRead ? "읽음" : "안읽음"}
+                                    </div>
                                 </div>
                             </div>
                         )
