@@ -36,17 +36,11 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
         if (ws) {
             ws.onmessage = (evt) => {
                 const data = JSON.parse(evt.data);
-
-                // for (let prop in data) {
-                //     // alert(prop + ": " + data[prop]);
-                //     log(prop + ": " + data[prop]);
-                // }
                 switch (data.type) {
                     case "user_incoming_message":
                         const msg = data as Message
                         setNewMsg(msg);
-                        const messageId = msg.message_id;
-                        markMessageAsRead(messageId);
+                        markMessageAsRead(msg.author);
                         break;
                     case "message_read":
                         setNewRead(data as Message);
@@ -69,15 +63,15 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
     useEffect(() => {
         if (newRead) {
             const updatedMessages = messages.map((message) => {
-                if (message.message_id === newRead.message_id) {
-                    return { ...message, isRead: true };
+                if (message.author !== newRead.author) {
+                    return { ...message, is_read: true };
                 }
                 return message;
             });
 
             setMessages(updatedMessages);
         }
-    }, [newRead, messages]);
+    }, [newRead]);
 
     const handleChangeCurrMsg = (msg: string) => {
         setCurrMsg(msg)
@@ -111,15 +105,15 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
         if (key === "Enter") handleClickSendMsg()
     }
 
-    const markMessageAsRead = (messageId: string) => {
-        ws?.send(JSON.stringify({ type: "message_read", messageId: messageId}));
+    const markMessageAsRead = (author: string) => {
+        ws?.send(JSON.stringify({ type: "message_read", author: author}));
     };
 
     useEffect(() => {
         // 채팅방에 입장하면 모든 메시지를 읽음 처리합니다.
         messages.forEach((message) => {
             if (!message.is_read) {
-                markMessageAsRead(message.message_id);
+                markMessageAsRead(message.author);
             }
         });
 
@@ -128,8 +122,7 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
             ws.onmessage = (evt) => {
                 const data = JSON.parse(evt.data);
                 if (data.type === "user_incoming_message") {
-                    const messageId = data.messageId;
-                    markMessageAsRead(messageId);
+                    markMessageAsRead(data.author);
                 }
             };
         }
