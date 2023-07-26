@@ -3,7 +3,6 @@ import {RouteComponentProps} from 'react-router';
 import queryString from 'query-string';
 import "./index.scss";
 import { v4 as uuidv4 } from 'uuid';
-import {log} from "util";
 
 type Message = {
     message_id: string,
@@ -40,7 +39,7 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
                     case "user_incoming_message":
                         const msg = data as Message
                         setNewMsg(msg);
-                        markMessageAsRead(msg.author);
+                        markMessageAsRead(displayName?.toString() || "");
                         break;
                     case "message_read":
                         setNewRead(data as Message);
@@ -108,25 +107,6 @@ const ChatPage = ({ history, location, match }: RouteComponentProps) => {
     const markMessageAsRead = (author: string) => {
         ws?.send(JSON.stringify({ type: "message_read", author: author}));
     };
-
-    useEffect(() => {
-        // 채팅방에 입장하면 모든 메시지를 읽음 처리합니다.
-        messages.forEach((message) => {
-            if (!message.is_read) {
-                markMessageAsRead(message.author);
-            }
-        });
-
-        // 새로운 메시지가 도착할 때마다 읽음 처리를 수행합니다.
-        if (ws != null) {
-            ws.onmessage = (evt) => {
-                const data = JSON.parse(evt.data);
-                if (data.type === "user_incoming_message") {
-                    markMessageAsRead(data.author);
-                }
-            };
-        }
-    }, []);
 
     return (
         <div className={"chat-page-container"}>
